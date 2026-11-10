@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # --- Web Application Service ---
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: devops-multi-container-api:latest
+    container_name: production_web_app
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgres://db_user:secure_password_2026@database:5432/telemetry_db
+    networks:
+      - backend-network
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: always
+
+  # --- Database Service ---
+  database:
+    image: postgres:15-alpine
+    container_name: production_postgres_db
+    environment:
+      - POSTGRES_USER=db_user
+      - POSTGRES_PASSWORD=secure_password_2026
+      - POSTGRES_DB=telemetry_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U db_user -d telemetry_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+# --- Persistent Storage Architecture ---
+volumes:
+  postgres_data:
+    driver: local
+
+# --- Isolated Network Architecture ---
+networks:
+  backend-network:
+    driver: bridge
