@@ -1,4 +1,5 @@
-node_modules
-npm-debug.log
+.env.prod
+.env.test
 .git
-.DS_Store
+.gitignore
+README.md
